@@ -16,5 +16,15 @@ const todoModal = {
       }
     );
   },
+  add: (content, cb) => {
+    db.query(
+      "INSERT INTO todos(content) values(?)",
+      [content],
+      (err, results) => {
+        if (err) return cb(err);
+        cb(null, results);
+      }
+    );
+  },
 };
 module.exports = todoModal;

@@ -1,9 +1,15 @@
 const express = require("express");
+const bodyParser = require("body-parser");
 const db = require("./db");
 const app = express();
 const port = 5001;
 const todoController = require("./controllers/todo");
 app.set("view engine", "ejs");
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// parse application/json
+app.use(bodyParser.json());
 
 function checkPermission(req, res, next) {
   if (req.query.admin === "1") {
@@ -12,9 +18,11 @@ function checkPermission(req, res, next) {
     res.end("Error");
   }
 }
-
-app.get("/todos", checkPermission, todoController.getAll);
+app.post("/todos", todoController.newTodo);
+app.get("/", todoController.addTodo);
+app.get("/todos", todoController.getAll);
 app.get("/todos/:id", todoController.get);
+
 app.listen(port, () => {
   db.connect(function (err) {
     if (err) {
