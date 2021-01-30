@@ -1,6 +1,7 @@
 const express = require("express");
 const session = require("express-session");
 const bodyParser = require("body-parser");
+const flash = require("connect-flash");
 const db = require("./db");
 const app = express();
 const port = 5001;
@@ -21,6 +22,13 @@ app.use(
   })
 );
 
+app.use(flash());
+app.use((req, res, next) => {
+  res.locals.isLogin = req.session.isLogin;
+  res.locals.errorMessage = req.flash("error_message");
+  next();
+});
+
 app.post("/todos", todoController.newTodo);
 app.get("/", todoController.addTodo);
 app.get("/todos", todoController.getAll);
@@ -33,6 +41,7 @@ app.post("/login", (req, res) => {
     req.session.isLogin = true;
     res.redirect("/");
   } else {
+    req.flash("error_message", "Please input the correct pasword.");
     res.redirect("/login");
   }
 });
