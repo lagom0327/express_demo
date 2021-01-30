@@ -4,7 +4,16 @@ const app = express();
 const port = 5001;
 const todoController = require("./controllers/todo");
 app.set("view engine", "ejs");
-app.get("/todos", todoController.getAll);
+
+function checkPermission(req, res, next) {
+  if (req.query.admin === "1") {
+    next();
+  } else {
+    res.end("Error");
+  }
+}
+
+app.get("/todos", checkPermission, todoController.getAll);
 app.get("/todos/:id", todoController.get);
 app.listen(port, () => {
   db.connect(function (err) {
