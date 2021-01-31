@@ -1,0 +1,13 @@
+<h1>簡易會員系統</h1>
+
+<% if(username) { %>
+  <a href="/logout">logout</a>
+
+  <form method="post" action="/comments">
+    <textarea name="content" cols="30" rows="10"></textarea>
+    <input type="submit" />
+  </form>
+<% } else { %>
+  <a href="/register">註冊</a>
+  <a href="/login">login</a>
+<%} %>
