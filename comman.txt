@@ -1,0 +1,8 @@
+npx sequelize-cli db:create
+npx sequelize-cli model:generate --name User --attributes username:string,nickname:string,password:string
+
+npx sequelize-cli model:generate --name Comment --attributes content:text,userId:integer
+
+npx sequelize-cli db:migrate
+
+npx sequelize-cli db:migrate:undo

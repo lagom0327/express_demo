@@ -1,48 +1,97 @@
-const commentModal = require("../modules/comment");
+const db = require("../models");
+const Comment = db.Comment;
+const User = db.User;
 const commentController = {
   index: (req, res, next) => {
-    commentModal.getAll((err, results) => {
-      if (err) {
+    Comment.findAll({
+      include: User,
+    })
+      .then((comments) => {
+        console.log("comm", JSON.stringify(comments, null, 2));
+        res.render("index", {
+          comments,
+        });
+      })
+      .catch((err) => {
         console.log(err);
-      }
-      res.render("index", {
-        comments: results,
       });
-    });
-  },
-  getAll: (req, res) => {
-    commentModal.getAll((err, results) => {
-      if (err) console.log(err);
-      // res.send(results);
-      res.render("comments", {
-        comments: results,
-      });
-    });
   },
   get: (req, res) => {
     const id = req.params.id;
-    commentModal.get(id, (err, results) => {
-      if (err) console.log(err);
-      // res.send(results[0]);
-      res.render("comment", {
-        comment: results[0],
+    Comment.findByPk(id)
+      .then((user) => {
+        res.render("comment", {
+          comment: results[0],
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  },
+  add: (req, res) => {
+    const { userId } = req.session;
+    const { content } = req.body;
+    if (!userId || !content) {
+      return res.redirect("/");
+    }
+    Comment.create({
+      content,
+      userId,
+    })
+      .then((comment) => {
+        console.log("create comment", comment);
+        res.redirect("/");
+      })
+      .catch((err) => {
+        console.log(err);
+        return res.redirect("/");
+      });
+    // res.end(content);
+  },
+  delete: (req, res) => {
+    Comment.findOne({
+      where: {
+        id: req.params.id,
+        userId: req.session.userId,
+      },
+    })
+      .then((comment) => {
+        return comment.destroy();
+      })
+      .then(() => {
+        res.redirect("/");
+      })
+      .catch((err) => {
+        // req.flash("errorMessage", err.toString());
+        res.redirect("/");
+      });
+  },
+  update: (req, res) => {
+    Comment.findByPk(req.params.id).then((comment) => {
+      res.render("update", {
+        comment,
       });
     });
   },
-  add: (req, res) => {
-    const { username } = req.session;
-    const { content } = req.body;
-    if (!username || !content) {
-      return res.redirect("/");
-    }
-    commentModal.add(username, content, (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.redirect("/");
-      }
-      res.redirect("/");
-    });
-    // res.end(content);
+  handleUpdate: (req, res) => {
+    Comment.findOne({
+      where: {
+        id: req.params.id,
+        userId: req.session.userId,
+      },
+    })
+      .then((comment) => {
+        return comment.update({
+          content: req.body.content,
+        });
+      })
+      .then(() => {
+        res.redirect("/");
+      })
+      .catch((err) => {
+        // req.flash("errorMessage", err.toString());
+        res.redirect("/");
+      });
   },
 };
 module.exports = commentController;

@@ -1,5 +1,6 @@
-const userModal = require("../modules/user");
 const bcrypt = require("bcrypt");
+const db = require("../models");
+const User = db.User;
 const saltRounds = 10;
 const userController = {
   login: (req, res) => {
@@ -11,29 +12,36 @@ const userController = {
       req.flash("errorMessage", "缺少必要欄位");
       return next();
     }
-    userModal.get(username, (err, user) => {
-      if (err) {
-        req.flash("errorMessage", err.toString());
-        return next();
-      }
-      console.log("user", user);
-      if (!user) {
-        req.flash("errorMessage", "帳號或密碼不存在");
-        return next();
-      }
-      bcrypt.compare(password, user.password, function (err, result) {
-        if (err || !result) {
-          req.flash("errorMessage", "密碼錯誤");
+
+    User.findOne({
+      where: {
+        username,
+      },
+    })
+      .then((user) => {
+        if (!user) {
+          req.flash("errorMessage", "帳號或密碼不存在");
           return next();
         }
-        req.session.username = user.username;
-        res.redirect("/");
-        // result == true
+        bcrypt.compare(password, user.password, function (err, result) {
+          if (err || !result) {
+            req.flash("errorMessage", "密碼錯誤");
+            return next();
+          }
+          req.session.username = user.username;
+          req.session.userId = user.id;
+          res.redirect("/");
+          // result == true
+        });
+      })
+      .catch((err) => {
+        req.flash("errorMessage", err.toString());
+        return next();
       });
-    });
   },
   handleLogout: (req, res) => {
     req.session.username = null;
+    req.session.userId = null;
     res.redirect("/");
   },
   register: (req, res) => {
@@ -50,21 +58,21 @@ const userController = {
         req.flash("errorMessage", err.toString());
         return next();
       }
-      userModal.add(
-        {
-          username,
-          nickname,
-          password: hash,
-        },
-        (error, result) => {
-          if (error) {
-            req.flash("errorMessage", error.toString());
-            return next();
-          }
+      User.create({
+        username,
+        nickname,
+        password: hash,
+      })
+        .then((user) => {
+          console.log("result", user);
           req.session.username = username;
+          req.session.userId = user.id;
           res.redirect("/");
-        }
-      );
+        })
+        .catch((err) => {
+          req.flash("errorMessage", err.toString());
+          return next();
+        });
     });
   },
 };
